@@ -26,7 +26,6 @@ let merge = (leftSortedArray, rightSortedArray) => {
     let leftArrayPositionMarker = 0;
     let rightArrayPositionMarker = 0;
     let mergedArray = [];
-
     let expectedMergedArraySize = leftSortedArray.length + rightSortedArray.length;
 
     while (mergedArray.length != expectedMergedArraySize) {
