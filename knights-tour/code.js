@@ -3,16 +3,11 @@ const sleep = (ms) => {
 };
 
 const convertChessboardPositionToMatrixIndices = (position) => {
-  let x = position.charCodeAt(0) - 97; //a, b, c starts at char 97
-  let y = Number(position[1]) - 1;
-
-  return { x: x, y: y };
+  return { x: position.charCodeAt(0) - 97, y: Number(position[1]) - 1 };
 };
 
 const convertMatrixIndicesToChessboardPosition = (xyPosition) => {
-  let x = String.fromCharCode(xyPosition.x + 97);
-  let y = xyPosition.y + 1;
-  return x + y;
+  return String.fromCharCode(xyPosition.x + 97) + (xyPosition.y + 1);
 };
 
 const isPositionOutsideOfTheChessBoard = (xyPosition) => {
@@ -72,67 +67,79 @@ const getPossibleKnightMoves = (currentPosition) => {
     .filter((move) => !isPositionOutsideOfTheChessBoard(move))
     .map((move) => convertMatrixIndicesToChessboardPosition(move));
 
+  delete possibleMoves;
+  delete currentXYPosition;
   return movesWhichAreNotOutsideOfTheChessboard;
 };
 
-const makeAMove = (currentPosition) => {};
+const getPositionsFromMovesStack = (moves) => {
+  let positions = {};
+  for (let i = 0; i < moves.length; i++) {
+    positions[moves[i]] = "bN";
+  }
+  return positions;
+};
 
-const play = async (
-  currentPosition,
-  previousPosition,
-  positions,
-  chessboard,
-  moveNumber
-) => {
-  moveNumber++;
-  console.log("Move number: %o", moveNumber);
-  await sleep(1000);
-  // console.log("Current position: %o", currentPosition);
-  // console.log("Position: %o", position);
-  console.log(
-    "Object.keys(position).length: %o",
-    Object.keys(positions).length
-  );
-  if (Object.keys(positions).length === 64) {
+const play = async (chessboard, moves, recursionDepth) => {
+  recursionDepth++;
+  // console.log("Recursion depth: %o", recursionDepth);
+  await sleep(50);
+
+  // let currentPosition = moves[moves.length - 1];
+  let positions = getPositionsFromMovesStack(moves);
+
+  // console.log("Move number: %o", moves.length);
+  // console.log("Current, last position: %o", currentPosition);
+  // console.log("Moves: %o", moves);
+
+  chessboard.destroy;
+  chessboard = Chessboard("chessboard", positions);
+  //chessboard.position(positions, false);
+
+  if (moves.length === 64) {
     //Knights are standing on all fields, success
     return;
   }
 
-  let possibleMoves = getPossibleKnightMoves(
-    Object.keys(currentPosition)[0]
-  ).filter((possibleMove) => !positions.hasOwnProperty(possibleMove));
-  console.log("Possible moves: %o", possibleMoves);
+  let possibleMoves = getPossibleKnightMoves(moves[moves.length - 1]).filter(
+    (possibleMove) => !positions.hasOwnProperty(possibleMove)
+  );
 
-  if (possibleMoves.length === 0) {
-    console.log("Dead end, rollback last move");
-    // delete positions[Object.keys(currentPosition)[0]];
-    return;
-  }
+  delete positions;
+  // console.log("Possible moves: %o", possibleMoves);
+
+  // if (possibleMoves.length === 0) {
+  //   //Oops, dead end, let's rollback
+  //   // console.log("Dead end");
+  //   return;
+  // }
 
   for (let i = 0; i < possibleMoves.length; i++) {
-    //make a move
-    console.log("Making move");
-    previousPosition = currentPosition;
-    currentPosition = {};
-    currentPosition[possibleMoves[i]] = "bN";
-    positions[possibleMoves[i]] = "bN";
-    chessboard = Chessboard("chessboard", positions);
-    await play(
-      currentPosition,
-      previousPosition,
-      positions,
-      chessboard,
-      moveNumber
-    );
+    // console.log("Making move");
+    moves.push(possibleMoves[i]);
+    if (recursionDepth < 45) {
+      console.log(
+        `Verifying move ${i + 1} of ${
+          possibleMoves.length
+        }, recursion depth ${recursionDepth}`
+      );
+    }
+    await play(chessboard, moves, recursionDepth);
+    moves.pop();
   }
+
+  delete possibleMoves;
+
+  return;
 };
 
 const main = async () => {
-  let currentPosition = { a8: "bN" };
-  let previousPosition = undefined;
-  let positions = { a8: "bN" };
-  let chessboard = Chessboard("chessboard", currentPosition);
-  await play(currentPosition, previousPosition, positions, chessboard, 0);
+  let moves = [];
+  moves.push("h8");
+  let positions = getPositionsFromMovesStack(moves);
+  let chessboard = Chessboard("chessboard", positions);
+  await play(chessboard, moves, 0);
+  console.log("Final moves: %o", moves);
 };
 
 main();
