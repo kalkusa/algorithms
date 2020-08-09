@@ -75,27 +75,64 @@ const getPossibleKnightMoves = (currentPosition) => {
   return movesWhichAreNotOutsideOfTheChessboard;
 };
 
+const makeAMove = (currentPosition) => {};
+
+const play = async (
+  currentPosition,
+  previousPosition,
+  positions,
+  chessboard,
+  moveNumber
+) => {
+  moveNumber++;
+  console.log("Move number: %o", moveNumber);
+  await sleep(1000);
+  // console.log("Current position: %o", currentPosition);
+  // console.log("Position: %o", position);
+  console.log(
+    "Object.keys(position).length: %o",
+    Object.keys(positions).length
+  );
+  if (Object.keys(positions).length === 64) {
+    //Knights are standing on all fields, success
+    return;
+  }
+
+  let possibleMoves = getPossibleKnightMoves(
+    Object.keys(currentPosition)[0]
+  ).filter((possibleMove) => !positions.hasOwnProperty(possibleMove));
+  console.log("Possible moves: %o", possibleMoves);
+
+  if (possibleMoves.length === 0) {
+    console.log("Dead end, rollback last move");
+    // delete positions[Object.keys(currentPosition)[0]];
+    return;
+  }
+
+  for (let i = 0; i < possibleMoves.length; i++) {
+    //make a move
+    console.log("Making move");
+    previousPosition = currentPosition;
+    currentPosition = {};
+    currentPosition[possibleMoves[i]] = "bN";
+    positions[possibleMoves[i]] = "bN";
+    chessboard = Chessboard("chessboard", positions);
+    await play(
+      currentPosition,
+      previousPosition,
+      positions,
+      chessboard,
+      moveNumber
+    );
+  }
+};
+
 const main = async () => {
   let currentPosition = { a8: "bN" };
-  let position = currentPosition;
+  let previousPosition = undefined;
+  let positions = { a8: "bN" };
   let chessboard = Chessboard("chessboard", currentPosition);
-
-  for (let i = 0; i < 50; i++) {
-    await sleep(300);
-    console.log("Current position: %o", currentPosition);
-    let possibleMoves = getPossibleKnightMoves(
-      Object.keys(currentPosition)[0]
-    ).filter((possibleMove) => !position.hasOwnProperty(possibleMove));
-    console.log("Possible moves: %o", possibleMoves);
-    if (possibleMoves.length > 0) {
-      position[possibleMoves[0]] = "bN";
-      console.log("Position: %o", position);
-      // chessboard.position(position, true);
-      chessboard = Chessboard("chessboard", position);
-      currentPosition = {};
-      currentPosition[possibleMoves[0]] = "bN";
-    }
-  }
+  await play(currentPosition, previousPosition, positions, chessboard, 0);
 };
 
 main();
